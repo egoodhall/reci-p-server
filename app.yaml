@@ -1,0 +1,6 @@
+# Default setup
+runtime: nodejs
+env: flex
+
+beta_settings:
+  cloud_sql_instances: reci-p:us-east1:reci-p-sql

@@ -1,0 +1,5 @@
+# Ignore node_modules -- this will be built with npm install
+node_modules/
+build/
+src/config.json
+src/db/config.json
