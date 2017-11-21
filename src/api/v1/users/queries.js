@@ -3,46 +3,64 @@ import _ from 'lodash';
 import { connection } from '../../../db';
 
 
-const addFilter = (queryString, value) => {
-  if (queryString.includes('WHERE')) {
-    return `${queryString} AND ${value}`;
+const processUser = (user) => {
+  if (user.following) {
+    user.following = user.ingredients.split(', ');
   }
-  return `${queryString} WHERE ${value}`;
+  return user;
 };
 
 
-const getUsers = (res, filters) => {
-  let queryParams = [];
-  let query = 'SELECT * FROM users';
+const getUsers = (res, partial, { ignore, page }) => {
+  let query = `
+    SELECT u.*,
+      GROUP_CONCAT(r.producer separator ', ') as following
+    FROM users u
+      LEFT JOIN relations r ON r.consumer = u.id
+    WHERE username LIKE ?
+  `;
 
-  // Searching by username
-  if (_.has(filters, 'username') === true) {
-    query = addFilter(query, 'username LIKE ?');
-    queryParams += `%${filters.username}%`;
+  // Query
+  const params = [`%${partial}%`];
 
-  // Retrieving people followed by user
-  } else if (_.has(filters, 'followedBy')) {
-    query = addFilter(query, 'id IN (SELECT target FROM relations)');
+  // Ignore single username
+  if (ignore) {
+    params.push(ignore);
+    query += ' AND username != ?';
   }
+  // Set maximum of 10 coming back
+  query += ' GROUP BY u.id LIMIT 10';
+
+  // Add a page offset
+  params.push((parseInt(page, 10) || 0) * 10);
+  query += ' OFFSET ?';
 
   // Make query to database
-  connection.query(query, queryParams, (err, result) => {
+  connection.query(query, params, (err, result) => {
     res.json({
       success: (err) ? false : true,
       msg: (err) ? err.sqlMessage : undefined,
-      data: result
+      data: (err) ? undefined : _.map(result, processUser)
     });
   });
 };
 
 
 const getUser = (res, id) => {
-  let query = 'SELECT * FROM users WHERE id=? LIMIT 1';
+  let query = `
+    SELECT users.*,
+      GROUP_CONCAT(relations.producer separator ', ') as following
+    FROM users
+      LEFT JOIN relations ON relations.consumer = users.id
+    WHERE id=? GROUP BY users.id LIMIT 1
+  `;
+
+  // Make query to database
   connection.query(query, [id], (err, result) => {
     res.json({
       success: (err) ? false : true,
       msg: (err) ? err.sqlMessage : undefined,
-      data: result
+      data: (err) ? undefined : processUser(result[0])
     });
   });
 };

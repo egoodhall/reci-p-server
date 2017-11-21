@@ -1,8 +1,8 @@
 import { connection } from '../../../db';
 
 const createUser = (res, user) => {
-  let query = 'INSERT IGNORE INTO users (username, displayname, id) VALUES (?, ?, ?)';
-  connection.query(query, [user.username, user.displayname, user.id], (err) => {
+  let query = 'INSERT IGNORE INTO users (username, displayname, id, photo) VALUES (?, ?, ?, ?)';
+  connection.query(query, [user.username, user.displayname, user.id, user.photo], (err) => {
     res.json({
       success: (err) ? false : true,
       msg: (err) ? err.sqlMessage : undefined

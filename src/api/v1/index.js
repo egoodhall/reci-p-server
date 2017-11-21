@@ -4,7 +4,7 @@ import { createUser, follow, unfollow } from './users/mutations';
 import { getUsers, getUser } from './users/queries';
 
 import { createRecipe, updateRecipe, deleteRecipe } from './recipes/mutations';
-import { getRecipes, getRecipe } from './recipes/queries';
+import { getRecipes, getRecipe, getFeed } from './recipes/queries';
 
 const v1 = new Router();
 
@@ -35,8 +35,8 @@ v1.get('/users/:id', (req, res) => {
   - username   : searches for usernames with a match to the partial one given
   - followedBy : returns all users followed by the given user id
  */
-v1.get('/users', (req, res) => {
-  getUsers(res, req.query);
+v1.get('/users/search/:query', (req, res) => {
+  getUsers(res, req.params.query, req.query);
 });
 
 // Follow
@@ -60,7 +60,7 @@ v1.get('/users/:id/recipes', (req, res) => {
 // Retrieve feed
 v1.get('/users/:id/feed', (req, res) => {
   const { id } = req.params;
-  getRecipes(res, { feed: id });
+  getFeed(res, id, req.query);
 });
 
 //=========//
