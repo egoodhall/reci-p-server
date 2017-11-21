@@ -69,7 +69,7 @@ v1.get('/users/:id/feed', (req, res) => {
 
 // Create
 v1.post('/recipes', (req, res) => {
-  createRecipe(res, res.body);
+  createRecipe(res, req.body);
 });
 
 // Retreive
@@ -79,9 +79,8 @@ v1.get('/recipes/:id', (req, res) => {
 });
 
 // Update
-v1.put('/recipes/:id', (req, res) => {
-  const { id } = req.params;
-  updateRecipe(res, id, req.body);
+v1.put('/recipes', (req, res) => {
+  updateRecipe(res, req.body);
 });
 
 // Delete

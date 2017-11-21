@@ -1,6 +1,7 @@
 import mysql from 'mysql';
+import _ from 'lodash';
 
-import config from './config.json';
+import config from '../config.json';
 
 const options = {
   user: config.MYSQL_USER,
@@ -8,6 +9,14 @@ const options = {
   database: 'reci_p'
 };
 
-const connection = mysql.createConnection(options);
+if (process.env.INSTANCE_CONNECTION_NAME && process.env.NODE_ENV === 'production') {
+  options.socketPath = `/cloudsql/${process.env.INSTANCE_CONNECTION_NAME}`;
+}
 
-export default connection;
+const connection = mysql.createConnection(options);
+const multiConnection = mysql.createConnection(_.assign(options, { multipleStatements: true }));
+
+export {
+  connection,
+  multiConnection
+};

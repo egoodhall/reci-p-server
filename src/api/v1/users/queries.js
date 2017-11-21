@@ -1,6 +1,6 @@
 import _ from 'lodash';
 
-import connection from '../../../db';
+import { connection } from '../../../db';
 
 
 const addFilter = (queryString, value) => {

@@ -1,6 +1,7 @@
 import _ from 'lodash';
 
-import connection from '../../../db';
+import { connection } from '../../../db';
+
 
 const queryBase = `
 SELECT r.*,
@@ -11,9 +12,22 @@ FROM recipes r
   LEFT JOIN instructions ON instructions.recipe_id = r.id
 `;
 
+
 const queryEnd = `
 GROUP BY r.id ORDER BY modification_ts DESC, creation_ts DESC, id ASC
 `;
+
+
+const processRecipe = (recipe) => {
+  if (recipe.instructions) {
+    recipe.instructions = recipe.instructions.split(', ');
+  }
+  if (recipe.ingredients) {
+    recipe.ingredients = recipe.ingredients.split(', ');
+  }
+  return recipe;
+};
+
 
 const getRecipes = (res, filters) => {
   let queryParams = [];
@@ -33,8 +47,7 @@ const getRecipes = (res, filters) => {
     res.json({
       success: (err) ? false : true,
       msg: (err) ? err.sqlMessage : undefined,
-      query,
-      data: result
+      data: _.map(result, processRecipe)
     });
   });
 };
@@ -46,7 +59,7 @@ const getRecipe = (res, id) => {
     res.json({
       success: (err) ? false : true,
       msg: (err) ? err.sqlMessage : undefined,
-      data: result
+      data: processRecipe(result)
     });
   });
 };
