@@ -28,11 +28,21 @@ const createRecipe = (res, recipe) => {
     INSERT INTO recipes
       (id, owner, creator, title, prep_time, cook_time, description, photo, creation_ts, modification_ts, rating)
     VALUES
-      (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+      (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ON DUPLICATE KEY UPDATE
+      owner=VALUES(owner), title=VALUES(title), prep_time=VALUES(prep_time),
+      cook_time=VALUES(cook_time), description=VALUES(description),
+      photo=VALUES(photo), modification_ts=VALUES(modification_ts),
+      rating=VALUES(rating);
 
-    ${(recipe.ingredients) ? insertIngrQuery(recipe.ingredients) : ''}
-    ${(recipe.instructions) ? insertInstQuery(recipe.ingredients) : ''}
+    DELETE FROM ingredients WHERE recipe_id=?;
+    DELETE FROM instructions WHERE recipe_id=?;
+
+    ${(recipe.ingredients && recipe.ingredients.length > 0) ? insertIngrQuery(recipe.ingredients) : ''}
+    ${(recipe.instructions && recipe.instructions.length > 0) ? insertInstQuery(recipe.instructions) : ''}
   `;
+
+  // console.log(recipe);
 
   // Params for base query
   const params = [
@@ -49,73 +59,29 @@ const createRecipe = (res, recipe) => {
     recipe.rating
   ];
 
+  // Delete old ingredients
+  params.push(recipe.id);
+  // Delete old instructions
+  params.push(recipe.id);
   // Insert all ingredients
-  _.forEach(recipe.ingredients, (ingredient) => params.push(recipe.id, ingredient));
-
-  // Insert all recipe.instructions
-  _.forEach(recipe.instructions, (instructions) => params.push(
+  _.forEach(recipe.ingredients, (ingredient) => params.push(
     recipe.id,
-    parseInt(instructions, 10),
-    _.trimStart(instructions, '0123456789. ')
+    ingredient
+  ));
+  // Insert all instructions
+  _.forEach(recipe.instructions, (instructions, idx) => params.push(
+    recipe.id,
+    idx + 1,
+    instructions
   ));
 
   console.log(query);
-  console.log(params.length);
-
-  res.json({ query });
+  console.log();
+  console.log(params);
 
   // Run query
   multiConnection.query(query, params, (err) => {
-    res.json({
-      success: (err) ? false : true,
-      msg: (err) ? err.sqlMessage : undefined
-    });
-  });
-};
-
-
-const updateRecipe = (res, recipe) => {
-
-  // Query to delete instructions and ingredients and update base
-  let query = `
-    UPDATE recipes SET
-      owner=?, title=?, prep_time=?, cook_time=?, description=?, photo=?, modification_ts=?, rating=?
-    WHERE id=?;
-
-    DELETE FROM ingredients WHERE recipe_id=?;
-    ${(recipe.ingredients) ? insertIngrQuery(recipe.ingredients) : ''}
-    DELETE FROM instructions WHERE recipe_id=?;
-    ${(recipe.instructions) ? insertInstQuery(recipe.ingredients) : ''}
-  `;
-
-  // Params for base query
-  const params = [
-    recipe.owner,
-    recipe.title,
-    recipe.prep_time,
-    recipe.cook_time,
-    recipe.description,
-    recipe.photo,
-    recipe.modification_ts,
-    recipe.rating,
-    recipe.id
-  ];
-
-  // Delete old ingredients
-  params.push(recipe.id);
-  // Insert all ingredients
-  _.forEach(recipe.ingredients, (ingredient) => params.push(recipe.id, ingredient));
-  // Delete old instructions
-  params.push(recipe.id);
-  // Insert all instructions
-  _.forEach(recipe.instructions, (instructions) => params.push(
-    recipe.id,
-    parseInt(instructions, 10),
-    _.trimStart(instructions, '0123456789. ')
-  ));
-
-  // Run queries
-  multiConnection.query(query, params, (err) => {
+    console.log(err);
     res.json({
       success: (err) ? false : true,
       msg: (err) ? err.sqlMessage : undefined
@@ -137,6 +103,5 @@ const deleteRecipe = (res, id) => {
 
 export {
   createRecipe,
-  updateRecipe,
   deleteRecipe
 };

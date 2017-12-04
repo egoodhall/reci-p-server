@@ -1,9 +1,9 @@
 import { Router } from 'express';
 
 import { createUser, follow, unfollow } from './users/mutations';
-import { getUsers, getUser } from './users/queries';
+import { userSearch, getUser, getFollowing } from './users/queries';
 
-import { createRecipe, updateRecipe, deleteRecipe } from './recipes/mutations';
+import { createRecipe, deleteRecipe } from './recipes/mutations';
 import { getRecipes, getRecipe, getFeed } from './recipes/queries';
 
 const v1 = new Router();
@@ -12,14 +12,7 @@ const v1 = new Router();
 // USER //
 //======//
 
-/* Create a user
-  Expects the request body to be in the form:
-  {
-    "username": "user_name",
-    "displayname": "Display Name",
-    "id": "identifier"
-  }
- */
+// Create a user
 v1.post('/users', (req, res) => {
   createUser(res, req.body);
 });
@@ -30,13 +23,9 @@ v1.get('/users/:id', (req, res) => {
   getUser(res, id);
 });
 
-/* Retrieve MULTIPLE users
-  Available query params are:
-  - username   : searches for usernames with a match to the partial one given
-  - followedBy : returns all users followed by the given user id
- */
+// Search for users with a key
 v1.get('/users/search/:query', (req, res) => {
-  getUsers(res, req.params.query, req.query);
+  userSearch(res, req.params.query, req.query);
 });
 
 // Follow
@@ -57,6 +46,12 @@ v1.get('/users/:id/recipes', (req, res) => {
   getRecipes(res, { id });
 });
 
+// Retrieve the users followed by a specified user
+v1.get('/users/:id/following', (req, res) => {
+  const { id } = req.params;
+  getFollowing(res, { id }, req.query);
+});
+
 // Retrieve feed
 v1.get('/users/:id/feed', (req, res) => {
   const { id } = req.params;
@@ -75,12 +70,8 @@ v1.post('/recipes', (req, res) => {
 // Retreive
 v1.get('/recipes/:id', (req, res) => {
   const { id } = req.params;
+  console.log(id);
   getRecipe(res, id);
-});
-
-// Update
-v1.put('/recipes', (req, res) => {
-  updateRecipe(res, req.body);
 });
 
 // Delete

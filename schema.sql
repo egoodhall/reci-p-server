@@ -13,30 +13,30 @@ CREATE TABLE relations (
 
 CREATE TABLE recipes (
   id VARCHAR(64) PRIMARY KEY,
-  title VARCHAR(128) NOT NULL,
+  title VARCHAR(128),
   description VARCHAR(512),
-  prep_time VARCHAR(32) NOT NULL,
-  cook_time VARCHAR(32) NOT NULL,
+  prep_time VARCHAR(32),
+  cook_time VARCHAR(32),
   photo VARCHAR(128),
-  creator VARCHAR(64) NOT NULL,
-  owner VARCHAR(64) NOT NULL,
-  creation_ts BIGINT NOT NULL,
-  modification_ts BIGINT NOT NULL,
+  creator VARCHAR(64),
+  owner VARCHAR(64),
+  creation_ts BIGINT,
+  modification_ts BIGINT,
   rating REAL,
   FOREIGN KEY (creator) REFERENCES users(id),
   FOREIGN KEY (owner) REFERENCES users(id)
 );
 
 CREATE TABLE ingredients (
-  recipe_id VARCHAR(64) NOT NULL,
-  ingredient VARCHAR(128) NOT NULL,
+  recipe_id VARCHAR(64),
+  ingredient VARCHAR(128),
   FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE
 );
 
 CREATE TABLE instructions (
-  recipe_id VARCHAR(64) NOT NULL,
-  number INT NOT NULL,
-  instruction VARCHAR(256) NOT NULL,
+  recipe_id VARCHAR(64),
+  number INT,
+  instruction VARCHAR(256),
   FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE,
   unique(recipe_id, number)
 );

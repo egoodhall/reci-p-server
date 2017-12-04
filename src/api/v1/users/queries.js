@@ -1,27 +1,13 @@
-import _ from 'lodash';
-
 import { connection } from '../../../db';
 
 
-const processUser = (user) => {
-  if (user.following) {
-    user.following = user.ingredients.split(', ');
-  }
-  return user;
-};
-
-
-const getUsers = (res, partial, { ignore, page }) => {
+const userSearch = (res, partial, { ignore, page }) => {
   let query = `
-    SELECT u.*,
-      GROUP_CONCAT(r.producer separator ', ') as following
-    FROM users u
-      LEFT JOIN relations r ON r.consumer = u.id
-    WHERE username LIKE ?
+    SELECT * FROM users WHERE username LIKE ?
   `;
 
   // Query
-  const params = [`%${partial}%`];
+  const params = [`${partial}%`];
 
   // Ignore single username
   if (ignore) {
@@ -29,7 +15,7 @@ const getUsers = (res, partial, { ignore, page }) => {
     query += ' AND username != ?';
   }
   // Set maximum of 10 coming back
-  query += ' GROUP BY u.id LIMIT 10';
+  query += ' LIMIT 10';
 
   // Add a page offset
   params.push((parseInt(page, 10) || 0) * 10);
@@ -40,19 +26,31 @@ const getUsers = (res, partial, { ignore, page }) => {
     res.json({
       success: (err) ? false : true,
       msg: (err) ? err.sqlMessage : undefined,
-      data: (err) ? undefined : _.map(result, processUser)
+      data: (err) ? undefined : JSON.parse(JSON.stringify(result))
+    });
+  });
+};
+
+
+const getFollowing = (res, { id }) => {
+  const query = `
+  SELECT * FROM users
+    WHERE id IN (SELECT producer FROM relations WHERE consumer = ?)
+  `;
+
+  connection.query(query, [id], (err, result) => {
+    res.json({
+      success: (err) ? false : true,
+      msg: (err) ? err.sqlMessage : undefined,
+      data: (err) ? undefined : JSON.parse(JSON.stringify(result))
     });
   });
 };
 
 
 const getUser = (res, id) => {
-  let query = `
-    SELECT users.*,
-      GROUP_CONCAT(relations.producer separator ', ') as following
-    FROM users
-      LEFT JOIN relations ON relations.consumer = users.id
-    WHERE id=? GROUP BY users.id LIMIT 1
+  const query = `
+    SELECT * FROM users WHERE id=? GROUP BY users.id LIMIT 1
   `;
 
   // Make query to database
@@ -60,13 +58,14 @@ const getUser = (res, id) => {
     res.json({
       success: (err) ? false : true,
       msg: (err) ? err.sqlMessage : undefined,
-      data: (err) ? undefined : processUser(result[0])
+      data: (err) ? undefined : JSON.parse(JSON.stringify(result[0]))
     });
   });
 };
 
 
 export {
-  getUsers,
-  getUser
+  userSearch,
+  getUser,
+  getFollowing
 };
